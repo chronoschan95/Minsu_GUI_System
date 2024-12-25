@@ -1,23 +1,28 @@
 package com.minsu.util;
 
+import javax.swing.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.swing.JOptionPane;
 
 public class DatabaseUtil {
-    private static final String URL = "jdbc:mysql://localhost:3306/minsu?useSSL=false&serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/minsu?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
     private static final String USERNAME = "chronos";
     private static final String PASSWORD = "root";
 
     static {
         try {
+            // 加载MySQL驱动
             Class.forName("com.mysql.cj.jdbc.Driver");
+            // 初始化数据库
+            initDatabase();
         } catch (ClassNotFoundException e) {
-            System.err.println("MySQL JDBC Driver not found.");
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,
+                "MySQL驱动加载失败: " + e.getMessage(),
+                "错误",
+                JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
         }
     }
 
@@ -25,31 +30,10 @@ public class DatabaseUtil {
         return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 
-    public static String getUrl() {
-        return URL;
-    }
-
-    public static String getUsername() {
-        return USERNAME;
-    }
-
-    public static String getPassword() {
-        return PASSWORD;
-    }
-
-    public static void initDatabase() {
+    private static void initDatabase() {
+        createDatabase();
+        
         try (Connection conn = getConnection()) {
-            // 创建用户表
-            String createUserTable = """
-                CREATE TABLE IF NOT EXISTS users (
-                    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    password VARCHAR(50) NOT NULL,
-                    role VARCHAR(20) NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """;
-            
             // 创建房源表
             String createHouseTable = """
                 CREATE TABLE IF NOT EXISTS houses (
@@ -57,9 +41,9 @@ public class DatabaseUtil {
                     host_id BIGINT NOT NULL,
                     title VARCHAR(100) NOT NULL,
                     description TEXT,
-                    price DOUBLE NOT NULL,
-                    status VARCHAR(20) NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    price DECIMAL(10,2) NOT NULL,
+                    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+                    publish_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (host_id) REFERENCES users(id)
                 )
             """;
@@ -72,8 +56,8 @@ public class DatabaseUtil {
                     guest_id BIGINT NOT NULL,
                     check_in DATE NOT NULL,
                     check_out DATE NOT NULL,
-                    status VARCHAR(20) NOT NULL,
-                    total_price DOUBLE NOT NULL,
+                    total_price DECIMAL(10,2) NOT NULL,
+                    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (house_id) REFERENCES houses(id),
                     FOREIGN KEY (guest_id) REFERENCES users(id)
@@ -95,38 +79,30 @@ public class DatabaseUtil {
                     FOREIGN KEY (guest_id) REFERENCES users(id)
                 )
             """;
-
-            // 执行建表语句
+            
             try (Statement stmt = conn.createStatement()) {
-                stmt.execute(createUserTable);
                 stmt.execute(createHouseTable);
                 stmt.execute(createOrderTable);
                 stmt.execute(createReviewTable);
-                
-                // 检查是否需要插入默认管理员账号
-                String checkAdmin = "SELECT COUNT(*) FROM users WHERE role = 'ADMIN'";
-                ResultSet rs = stmt.executeQuery(checkAdmin);
-                if (rs.next() && rs.getInt(1) == 0) {
-                    String insertAdmin = """
-                        INSERT INTO users (username, password, role) 
-                        VALUES ('admin', 'admin123', 'ADMIN')
-                    """;
-                    stmt.execute(insertAdmin);
-                }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("数据库初始化失败: " + e.getMessage(), e);
+        }
+    }
+
+    private static void createDatabase() {
+        String url = "jdbc:mysql://localhost:3306?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+        try (Connection conn = DriverManager.getConnection(url, USERNAME, PASSWORD);
+             Statement stmt = conn.createStatement()) {
             
-        } catch (Exception e) {
-            e.printStackTrace();
+            stmt.execute("CREATE DATABASE IF NOT EXISTS minsu");
+            
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null,
-                "数据库初始化失败：" + e.getMessage(),
+                "创建数据库失败: " + e.getMessage(),
                 "错误",
                 JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
-    }
-
-    public static void initialize() {
-        // 执行数据库迁移
-        DatabaseMigrationUtil.migrate();
     }
 }

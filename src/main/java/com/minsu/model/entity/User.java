@@ -48,11 +48,7 @@ public class User {
     }
 
     public void setRole(String roleStr) {
-        try {
-            this.role = UserRole.valueOf(roleStr);
-        } catch (IllegalArgumentException e) {
-            this.role = UserRole.GUEST;
-        }
+        this.role = UserRole.fromString(roleStr);
     }
 
     public String getCreatedAt() {
@@ -61,5 +57,15 @@ public class User {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", role=" + (role != null ? role.getDisplayName() : "未知") +
+                ", createdAt='" + createdAt + '\'' +
+                '}';
     }
 }

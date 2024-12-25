@@ -8,6 +8,7 @@ import com.minsu.util.ExportUtil;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class HouseListPanel extends JPanel {
@@ -63,59 +64,37 @@ public class HouseListPanel extends JPanel {
         refreshHouseList();
     }
 
-    private void refreshHouseList() {
-        tableModel.setRowCount(0);
-        List<House> houses = houseDao.getHousesByHostId(host.getId());
-        for (House house : houses) {
-            tableModel.addRow(new Object[]{
-                house.getId(),
-                house.getTitle(),
-                house.getDescription(),
-                house.getPrice(),
-                house.getStatus(),
-                house.getCreatedAt()
-            });
-        }
-    }
-
     private void showAddHouseDialog() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "添加房源", true);
-        dialog.setSize(400, 300);
-        dialog.setLocationRelativeTo(this);
-
-        JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
+        // 使用 Frame 作为父窗口
+        Frame parent = (Frame) SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(parent, "添加房源", true);
+        dialog.setLayout(new BorderLayout(10, 10));
+        
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         JTextField titleField = new JTextField();
-        JTextArea descField = new JTextArea();
+        JTextField descField = new JTextField();
         JTextField priceField = new JTextField();
-        JButton submitButton = new JButton("添加");
-
-        panel.add(new JLabel("标题:"));
-        panel.add(titleField);
-        panel.add(new JLabel("描述:"));
-        panel.add(new JScrollPane(descField));
-        panel.add(new JLabel("价格:"));
-        panel.add(priceField);
-        panel.add(new JLabel());
-        panel.add(submitButton);
-
-        submitButton.addActionListener(e -> {
+        
+        formPanel.add(new JLabel("标题:"));
+        formPanel.add(titleField);
+        formPanel.add(new JLabel("描述:"));
+        formPanel.add(descField);
+        formPanel.add(new JLabel("价格:"));
+        formPanel.add(priceField);
+        
+        JButton submitBtn = new JButton("提交");
+        submitBtn.addActionListener(e -> {
             try {
-                String title = titleField.getText().trim();
-                String description = descField.getText().trim();
-                double price = Double.parseDouble(priceField.getText().trim());
-
-                if (title.isEmpty() || description.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog, "请填写所有字段！");
-                    return;
-                }
-
                 House house = new House();
                 house.setHostId(host.getId());
-                house.setTitle(title);
-                house.setDescription(description);
-                house.setPrice(price);
+                house.setTitle(titleField.getText().trim());
+                house.setDescription(descField.getText().trim());
+                house.setPrice(Double.parseDouble(priceField.getText().trim()));
                 house.setStatus("AVAILABLE");
-
+                house.setPublishTime(LocalDateTime.now());
+                
                 if (houseDao.addHouse(house)) {
                     JOptionPane.showMessageDialog(dialog, "添加成功！");
                     dialog.dispose();
@@ -127,8 +106,11 @@ public class HouseListPanel extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "请输入有效的价格！");
             }
         });
-
-        dialog.add(panel);
+        
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(submitBtn, BorderLayout.SOUTH);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
 
@@ -150,7 +132,8 @@ public class HouseListPanel extends JPanel {
     }
 
     private void showEditHouseDialog(House house) {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "编辑房源", true);
+        Frame parent = (Frame) SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(parent, "编辑房源", true);
         dialog.setSize(400, 300);
         dialog.setLocationRelativeTo(this);
 
@@ -218,6 +201,29 @@ public class HouseListPanel extends JPanel {
             } else {
                 JOptionPane.showMessageDialog(this, "下架失败！");
             }
+        }
+    }
+
+    public void refreshHouseList() {
+        try {
+            List<House> houses = houseDao.getHousesByHostId(host.getId());
+            tableModel.setRowCount(0);
+            for (House house : houses) {
+                Object[] row = {
+                    house.getId(),
+                    house.getTitle(),
+                    house.getDescription(),
+                    house.getPrice(),
+                    house.getStatus(),
+                    house.getPublishTime()
+                };
+                tableModel.addRow(row);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "获取房源列表失败：" + e.getMessage(),
+                "错误",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 } 

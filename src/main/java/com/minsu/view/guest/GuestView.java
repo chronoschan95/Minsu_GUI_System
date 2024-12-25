@@ -9,6 +9,7 @@ import com.minsu.view.house.HouseListView;
 import com.minsu.view.order.GuestOrderView;
 import com.minsu.view.guest.ProfilePanel;
 
+
 public class GuestView extends JFrame {
     private final User user;
     private JPanel contentPanel;

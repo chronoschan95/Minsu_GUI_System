@@ -1,79 +1,92 @@
 package com.minsu.view.admin;
 
 import com.minsu.model.entity.User;
+import com.minsu.util.ThemeUtil;
 import com.minsu.view.LoginView;
 import javax.swing.*;
 import java.awt.*;
 
 public class AdminView extends JFrame {
+    private final User admin;
+    private JPanel contentPanel;
+
     public AdminView(User admin) {
-        setTitle("系统管理面板 - " + admin.getUsername());
+        this.admin = admin;
+        initComponents();
+        ThemeUtil.registerWindow(this);
+    }
+
+    private void initComponents() {
+        setTitle("民宿管理系统 - 管理员界面 - " + admin.getUsername());
         setSize(1000, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // 创建主面板
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        
-        // 创建顶部面板
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JLabel welcomeLabel = new JLabel("管理员: " + admin.getUsername());
-        JButton logoutButton = new JButton("退出登录");
-        topPanel.add(welcomeLabel);
-        topPanel.add(logoutButton);
-        
-        // 创建左侧菜单
-        JPanel menuPanel = new JPanel();
-        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
-        JButton userManagementButton = new JButton("用户管理");
-        JButton systemMonitorButton = new JButton("系统监控");
-        menuPanel.add(userManagementButton);
-        menuPanel.add(systemMonitorButton);
-        
-        // 创建内容面板
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        
-        // 添加到主面板
-        mainPanel.add(topPanel, BorderLayout.NORTH);
-        mainPanel.add(menuPanel, BorderLayout.WEST);
-        mainPanel.add(contentPanel, BorderLayout.CENTER);
-        
-        // 添加到窗口
-        add(mainPanel);
-        
+        // 侧边栏按钮
+        JPanel sidePanel = new JPanel(new GridLayout(5, 1, 5, 5));
+        JButton userManageBtn = new JButton("用户管理");
+        JButton systemMonitorBtn = new JButton("系统监控");
+        JButton settingsBtn = new JButton("系统设置");
+        JButton logoutBtn = new JButton("退出登录");
+
         // 添加事件监听
-        logoutButton.addActionListener(e -> logout());
-        userManagementButton.addActionListener(e -> showUserManagement());
-        systemMonitorButton.addActionListener(e -> showSystemMonitor());
+        userManageBtn.addActionListener(e -> showUserManagement());
+        systemMonitorBtn.addActionListener(e -> showSystemMonitor());
+        settingsBtn.addActionListener(e -> showSettings());
+        logoutBtn.addActionListener(e -> logout());
+
+        // 添加到侧边栏
+        sidePanel.add(userManageBtn);
+        sidePanel.add(systemMonitorBtn);
+        sidePanel.add(settingsBtn);
+        sidePanel.add(logoutBtn);
+
+        // 主内容面板
+        contentPanel = new JPanel(new BorderLayout());
         
         // 默认显示用户管理
         showUserManagement();
+
+        // 设置布局
+        setLayout(new BorderLayout());
+        add(sidePanel, BorderLayout.WEST);
+        add(contentPanel, BorderLayout.CENTER);
     }
-    
-    private void logout() {
-        dispose();
-        new LoginView().setVisible(true);
-    }
-    
+
     private void showUserManagement() {
-        JPanel contentPanel = (JPanel) ((BorderLayout) getContentPane().getLayout())
-                .getLayoutComponent(BorderLayout.CENTER);
         contentPanel.removeAll();
-        contentPanel.setLayout(new BorderLayout());
         UserManagementView userManagementView = new UserManagementView();
-        contentPanel.add(userManagementView, BorderLayout.CENTER);
+        contentPanel.add(userManagementView);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
-    
+
     private void showSystemMonitor() {
-        JPanel contentPanel = (JPanel) ((BorderLayout) getContentPane().getLayout())
-                .getLayoutComponent(BorderLayout.CENTER);
         contentPanel.removeAll();
-        contentPanel.setLayout(new BorderLayout());
         SystemMonitorView systemMonitorView = new SystemMonitorView();
-        contentPanel.add(systemMonitorView, BorderLayout.CENTER);
+        contentPanel.add(systemMonitorView);
         contentPanel.revalidate();
         contentPanel.repaint();
+    }
+
+    private void showSettings() {
+        contentPanel.removeAll();
+        SettingsView settingsView = new SettingsView();
+        contentPanel.add(settingsView);
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    private void logout() {
+        int option = JOptionPane.showConfirmDialog(this,
+            "确定要退出登录吗？",
+            "退出确认",
+            JOptionPane.YES_NO_OPTION);
+            
+        if (option == JOptionPane.YES_OPTION) {
+            ThemeUtil.unregisterWindow(this);
+            dispose();
+            new LoginView().setVisible(true);
+        }
     }
 } 

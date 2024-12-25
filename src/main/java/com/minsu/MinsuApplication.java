@@ -1,7 +1,6 @@
 package com.minsu;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import com.minsu.util.DatabaseUtil;
 import com.minsu.util.ThemeUtil;
 import com.minsu.view.LoginView;
 
@@ -15,9 +14,6 @@ public class MinsuApplication {
             
             // 应用全局样式
             ThemeUtil.applyGlobalStyle();
-            
-            // 初始化数据库
-            DatabaseUtil.initialize();
             
             // 启动登录界面
             SwingUtilities.invokeLater(() -> {

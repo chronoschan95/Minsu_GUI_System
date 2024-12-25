@@ -4,6 +4,7 @@ import com.minsu.model.entity.User;
 import com.minsu.util.ThemeUtil;
 import com.minsu.view.LoginView;
 import com.minsu.view.income.IncomeStatisticsView;
+import com.minsu.view.settings.SettingsView;
 import javax.swing.*;
 import java.awt.*;
 
@@ -23,88 +24,47 @@ public class HostView extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // 创建主面板
-        JPanel mainPanel = new ThemeUtil.GradientPanel();
-        mainPanel.setLayout(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // 添加新的功能按钮
+        JPanel sidePanel = new JPanel(new GridLayout(6, 1, 5, 5));
+        JButton houseManageBtn = new JButton("房源管理");
+        JButton orderManageBtn = new JButton("订单管理");
+        JButton incomeStatBtn = new JButton("收入统计");
+        JButton profileBtn = new JButton("个人信息");
+        JButton settingsBtn = new JButton("系统设置");
+        JButton logoutBtn = new JButton("退出登录");
 
-        // 创建顶部面板
-        JPanel topPanel = createTopPanel();
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        // 添加按钮事件
+        houseManageBtn.addActionListener(e -> showHouseManagement());
+        orderManageBtn.addActionListener(e -> showOrderManagement());
+        incomeStatBtn.addActionListener(e -> showIncomeStatistics());
+        profileBtn.addActionListener(e -> showProfile());
+        settingsBtn.addActionListener(e -> showSettings());
+        logoutBtn.addActionListener(e -> logout());
 
-        // 创建左侧菜单
-        JPanel menuPanel = createMenuPanel();
-        mainPanel.add(menuPanel, BorderLayout.WEST);
+        // 添加到侧边栏
+        sidePanel.add(houseManageBtn);
+        sidePanel.add(orderManageBtn);
+        sidePanel.add(incomeStatBtn);
+        sidePanel.add(profileBtn);
+        sidePanel.add(settingsBtn);
+        sidePanel.add(logoutBtn);
 
-        // 创建内容面板
+        // 主内容面板
         contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setOpaque(false);
-        mainPanel.add(contentPanel, BorderLayout.CENTER);
-
-        setContentPane(mainPanel);
-        ThemeUtil.applyTheme(this);
-
+        
         // 默认显示房源管理
         showHouseManagement();
-    }
 
-    private JPanel createTopPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setOpaque(false);
-
-        // 欢迎信息
-        JLabel welcomeLabel = new JLabel("欢迎, " + user.getUsername());
-        welcomeLabel.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        welcomeLabel.setForeground(ThemeUtil.getCurrentTextColor());
-        panel.add(welcomeLabel, BorderLayout.WEST);
-
-        // 右侧工具栏
-        JPanel toolPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        toolPanel.setOpaque(false);
-
-        JButton themeButton = ThemeUtil.createStyledButton("切换主题");
-        JButton logoutButton = ThemeUtil.createStyledButton("退出登录");
-
-        themeButton.addActionListener(e -> ThemeUtil.toggleDarkMode());
-        logoutButton.addActionListener(e -> logout());
-
-        toolPanel.add(themeButton);
-        toolPanel.add(logoutButton);
-        panel.add(toolPanel, BorderLayout.EAST);
-
-        return panel;
-    }
-
-    private JPanel createMenuPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        String[] menuItems = {"房源管理", "订单管理", "收入统计", "个人信息"};
-        for (String item : menuItems) {
-            JButton button = ThemeUtil.createStyledButton(item);
-            button.setMaximumSize(new Dimension(150, 40));
-            button.setAlignmentX(Component.CENTER_ALIGNMENT);
-            
-            switch (item) {
-                case "房源管理" -> button.addActionListener(e -> showHouseManagement());
-                case "订单管理" -> button.addActionListener(e -> showOrderManagement());
-                case "收入统计" -> button.addActionListener(e -> showIncomeStatistics());
-                case "个人信息" -> button.addActionListener(e -> showProfile());
-            }
-            
-            panel.add(button);
-            panel.add(Box.createVerticalStrut(10));
-        }
-
-        return panel;
+        // 设置布局
+        setLayout(new BorderLayout());
+        add(sidePanel, BorderLayout.WEST);
+        add(contentPanel, BorderLayout.CENTER);
     }
 
     private void showHouseManagement() {
         contentPanel.removeAll();
-        HouseListPanel housePanel = new HouseListPanel(user);
-        contentPanel.add(housePanel);
+        HouseListPanel houseListPanel = new HouseListPanel(user);
+        contentPanel.add(houseListPanel);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
@@ -119,8 +79,16 @@ public class HostView extends JFrame {
 
     private void showIncomeStatistics() {
         contentPanel.removeAll();
-        IncomeStatisticsView incomePanel = new IncomeStatisticsView(user);
-        contentPanel.add(incomePanel);
+        IncomeStatisticsView incomeView = new IncomeStatisticsView(user);
+        contentPanel.add(incomeView);
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    private void showSettings() {
+        contentPanel.removeAll();
+        SettingsView settingsView = new SettingsView();
+        contentPanel.add(settingsView);
         contentPanel.revalidate();
         contentPanel.repaint();
     }

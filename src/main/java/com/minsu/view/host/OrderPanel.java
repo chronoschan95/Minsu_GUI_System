@@ -51,8 +51,8 @@ public class OrderPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // 事件监听
-        confirmButton.addActionListener(e -> confirmOrder());
-        rejectButton.addActionListener(e -> rejectOrder());
+        confirmButton.addActionListener(e -> handleOrder("confirm"));
+        rejectButton.addActionListener(e -> handleOrder("reject"));
         exportButton.addActionListener(e -> ExportUtil.exportTableToCSV(orderTable, "orders"));
         refreshButton.addActionListener(e -> refreshOrderList());
 
@@ -60,11 +60,11 @@ public class OrderPanel extends JPanel {
         refreshOrderList();
     }
 
-    private void refreshOrderList() {
-        tableModel.setRowCount(0);
+    public void refreshOrderList() {
         List<Order> orders = orderDao.getOrdersByHostId(host.getId());
+        tableModel.setRowCount(0);
         for (Order order : orders) {
-            tableModel.addRow(new Object[]{
+            Object[] row = {
                 order.getId(),
                 order.getHouseId(),
                 order.getGuestId(),
@@ -73,38 +73,33 @@ public class OrderPanel extends JPanel {
                 order.getStatus(),
                 order.getTotalPrice(),
                 order.getCreatedAt()
-            });
+            };
+            tableModel.addRow(row);
         }
     }
 
-    private void confirmOrder() {
-        updateOrderStatus("CONFIRMED");
-    }
-
-    private void rejectOrder() {
-        updateOrderStatus("CANCELLED");
-    }
-
-    private void updateOrderStatus(String status) {
+    private void handleOrder(String action) {
         int selectedRow = orderTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "请先选择一个订单！");
+            JOptionPane.showMessageDialog(this, "请选择一个订单");
             return;
         }
-
+        
         Long orderId = (Long) tableModel.getValueAt(selectedRow, 0);
-        String currentStatus = (String) tableModel.getValueAt(selectedRow, 5);
-
-        if (!"PENDING".equals(currentStatus)) {
-            JOptionPane.showMessageDialog(this, "只能处理待确认的订单！");
-            return;
-        }
-
-        if (orderDao.updateOrderStatus(orderId, status)) {
-            JOptionPane.showMessageDialog(this, "订单状态更新成功！");
-            refreshOrderList();
-        } else {
-            JOptionPane.showMessageDialog(this, "订单状态更新失败！");
+        String status = action.equals("confirm") ? "CONFIRMED" : "REJECTED";
+        
+        try {
+            if (orderDao.updateOrderStatus(orderId, status)) {
+                JOptionPane.showMessageDialog(this, "操作成功！");
+                refreshOrderList();
+            } else {
+                JOptionPane.showMessageDialog(this, "操作失败！");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "处理订单失败：" + e.getMessage(),
+                "错误",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 } 
